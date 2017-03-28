@@ -1,7 +1,7 @@
 extern crate ncurses;
 
 use ncurses::*;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 static BOARD_HEIGHT: i32 = 12 + 2;
 static BOARD_WIDTH: i32 = 6 + 2;
@@ -11,12 +11,13 @@ trait Renderable {
 }
 
 struct View {
-    objects: Vec<Rc<Renderable>>,
+    objects: Vec<Arc<Mutex<Renderable>>>,
 }
 
 impl Renderable for View {
     fn render(&self) {
         for o in &self.objects {
+            let o = o.lock().unwrap();
             o.render();
         }
     }
@@ -247,22 +248,22 @@ fn main() {
 
     let start_y = (max_y - BOARD_HEIGHT) / 2;
     let start_x = (max_x - BOARD_WIDTH) / 2;
-    let mut board = Rc::new(Board {
+    let board = Arc::new(Mutex::new(Board {
         width: BOARD_WIDTH,
         height: BOARD_HEIGHT,
         x: start_x,
         y: start_y,
         rows: Vec::new(),
         win: None,
-    });
+    }));
     let x = start_x + 1;
     let y = start_y + 1;
 
-    let mut s = Rc::new(Chr {
+    let s = Arc::new(Mutex::new(Chr {
         colors: (Color::Red, Color::Blue),
         position: (x, y),
         orient: Orient::V,
-    });
+    }));
 
     let _b = board.clone();
     let _s = s.clone();
@@ -272,32 +273,31 @@ fn main() {
     while ch != KEY_F(1) {
         match ch {
             KEY_LEFT => {
-                if s.can_move_left(&board) {
-                    let s = Rc::make_mut(&mut s);
+                let mut s = s.lock().unwrap();
+                let b = board.lock().unwrap();
+                if s.can_move_left(&b) {
                     s.left();
                 }
             }
             KEY_RIGHT => {
-                if s.can_move_right(&board) {
-                    let s = Rc::make_mut(&mut s);
+                let mut s = s.lock().unwrap();
+                let b = board.lock().unwrap();
+                if s.can_move_right(&b) {
                     s.right();
                 }
             }
-            KEY_UP => {
-                if s.can_move_up(&board) {
-                    let s = Rc::make_mut(&mut s);
-                    s.up();
-                }
-            }
+            KEY_UP => {}
             KEY_DOWN => {
-                if s.can_move_down(&board) {
-                    let s = Rc::make_mut(&mut s);
+                let mut s = s.lock().unwrap();
+                let b = board.lock().unwrap();
+                if s.can_move_down(&b) {
                     s.down();
                 }
             }
             0x20 => {
-                let s = Rc::make_mut(&mut s);
-                s.rotate(&board);
+                let mut s = s.lock().unwrap();
+                let b = board.lock().unwrap();
+                s.rotate(&b);
             }
             _ => break,
         }
