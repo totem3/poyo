@@ -238,7 +238,7 @@ fn main() {
 
     start_color();
     init_pair(Color::Red as i16, 0, 1);
-    init_pair(Color::Blue as i16, 0, 2);
+    init_pair(Color::Green as i16, 0, 2);
     init_pair(Color::Yellow as i16, 0, 3);
     init_pair(Color::Blue as i16, 0, 4);
 
