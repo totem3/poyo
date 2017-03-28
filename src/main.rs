@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 static BOARD_HEIGHT: i32 = 12 + 2;
 static BOARD_WIDTH: i32 = 6 + 2;
+const KEY_SPACE: i32 = 0x20;
 
 trait Renderable {
     fn render(&self);
@@ -294,7 +295,7 @@ fn main() {
                     s.down();
                 }
             }
-            0x20 => {
+            KEY_SPACE => {
                 let mut s = s.lock().unwrap();
                 let b = board.lock().unwrap();
                 s.rotate(&b);
