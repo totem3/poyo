@@ -1,9 +1,26 @@
 extern crate ncurses;
 
 use ncurses::*;
+use std::rc::Rc;
 
 static BOARD_HEIGHT: i32 = 12 + 2;
 static BOARD_WIDTH: i32 = 6 + 2;
+
+trait Renderable {
+    fn render(&self);
+}
+
+struct View {
+    objects: Vec<Rc<Renderable>>,
+}
+
+impl Renderable for View {
+    fn render(&self) {
+        for o in &self.objects {
+            o.render();
+        }
+    }
+}
 
 #[derive(Debug)]
 struct Board {
@@ -35,25 +52,25 @@ impl Board {
         self.y + self.height - 1
     }
 
-    fn render(&mut self) {
-        self.destroy();
-        self.create();
-    }
-
-    fn create(&mut self) {
+    fn create(&self) {
         let win = newwin(self.height, self.width, self.y, self.x);
         box_(win, 0, 0);
         wrefresh(win);
-        self.win = Some(win);
     }
 
-    fn destroy(&mut self) {
+    fn destroy(&self) {
         let ch = ' ' as chtype;
-        if let Some(win) = self.win {
-            wborder(win, ch, ch, ch, ch, ch, ch, ch, ch);
-            wrefresh(win);
-            delwin(win);
-        }
+        let win = newwin(self.height, self.width, self.y, self.x);
+        wborder(win, ch, ch, ch, ch, ch, ch, ch, ch);
+        wrefresh(win);
+        delwin(win);
+    }
+}
+
+impl Renderable for Board {
+    fn render(&self) {
+        self.destroy();
+        self.create();
     }
 }
 
@@ -78,12 +95,14 @@ fn color_view(c: Color) -> &'static str {
     }
 }
 
+#[derive(Debug,Clone)]
 enum Orient {
     V,
     H,
     RV,
     RH,
 }
+#[derive(Clone)]
 struct Chr {
     colors: (Color, Color),
     position: (i32, i32),
@@ -185,7 +204,9 @@ impl Chr {
             true
         }
     }
+}
 
+impl Renderable for Chr {
     fn render(&self) {
         let p = color_view(self.colors.0);
         colored!(self.colors.0 => {
@@ -202,7 +223,6 @@ impl Chr {
         });
     }
 }
-
 
 fn main() {
     initscr();
@@ -227,54 +247,61 @@ fn main() {
 
     let start_y = (max_y - BOARD_HEIGHT) / 2;
     let start_x = (max_x - BOARD_WIDTH) / 2;
-    let mut board = Board {
+    let mut board = Rc::new(Board {
         width: BOARD_WIDTH,
         height: BOARD_HEIGHT,
         x: start_x,
         y: start_y,
         rows: Vec::new(),
         win: None,
-    };
-    board.render();
+    });
     let x = start_x + 1;
     let y = start_y + 1;
 
-    let mut s = Chr {
+    let mut s = Rc::new(Chr {
         colors: (Color::Red, Color::Blue),
         position: (x, y),
         orient: Orient::V,
-    };
-    s.render();
+    });
+
+    let _b = board.clone();
+    let _s = s.clone();
+    let view = View { objects: vec![_b, _s] };
+    view.render();
     let mut ch = getch();
     while ch != KEY_F(1) {
         match ch {
             KEY_LEFT => {
                 if s.can_move_left(&board) {
+                    let s = Rc::make_mut(&mut s);
                     s.left();
                 }
             }
             KEY_RIGHT => {
                 if s.can_move_right(&board) {
+                    let s = Rc::make_mut(&mut s);
                     s.right();
                 }
             }
             KEY_UP => {
                 if s.can_move_up(&board) {
+                    let s = Rc::make_mut(&mut s);
                     s.up();
                 }
             }
             KEY_DOWN => {
                 if s.can_move_down(&board) {
+                    let s = Rc::make_mut(&mut s);
                     s.down();
                 }
             }
             0x20 => {
+                let s = Rc::make_mut(&mut s);
                 s.rotate(&board);
             }
             _ => break,
         }
-        board.render();
-        s.render();
+        view.render();
         ch = getch();
     }
 
