@@ -1,5 +1,5 @@
 use ncurses::*;
-use view::Renderable;
+use view::{View, Renderable};
 use board::Board;
 use rand::random;
 
@@ -30,7 +30,7 @@ impl Chr {
 
     pub fn rand() -> Self {
         let colors = (Color::rand(), Color::rand());
-        let position = (2, 0);
+        let position = (2, 1);
         let orient = Orient::V;
         Chr::new(colors, position, orient)
     }
@@ -198,24 +198,26 @@ impl ::std::convert::From<u8> for Color {
 
 impl Color {
     pub fn rand() -> Self {
-        let v:u8 = random();// % 4 + 1;
+        let v:u8 = random();
         Color::from(v % 4 + 1)
     }
 }
 
 impl Renderable for Chr {
-    fn render(&self) {
+    fn render(&self, view: &View) {
         let p = color_view(self.colors.0);
+        let x = self.x() + view.x;
+        let y = self.y() + view.y;
         colored!(self.colors.0 => {
-            mvprintw(self.y(), self.x(), p)
+            mvprintw(y, x, p)
         });
         let s = color_view(self.colors.1);
         colored!(self.colors.1 => {
             match self.orient {
-                Orient::V => mvprintw(self.y() + 1, self.x(), s),
-                Orient::H => mvprintw(self.y(), self.x() + 1, s),
-                Orient::RV => mvprintw(self.y() - 1, self.x(), s),
-                Orient::RH => mvprintw(self.y(), self.x() - 1, s),
+                Orient::V => mvprintw(y + 1, x, s),
+                Orient::H => mvprintw(y, x + 1, s),
+                Orient::RV => mvprintw(y - 1, x, s),
+                Orient::RH => mvprintw(y, x - 1, s),
             }
         });
     }

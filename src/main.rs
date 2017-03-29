@@ -31,8 +31,6 @@ fn main() {
     let board = Arc::new(Mutex::new(Board::new (
         BOARD_WIDTH,
         BOARD_HEIGHT,
-        start_x,
-        start_y,
         Vec::new(),
     )));
     let x = start_x + 1;
@@ -42,17 +40,17 @@ fn main() {
 
     let _b = board.clone();
     let _s = s.clone();
-    let view = View::new( vec![_b, _s] );
-    view.render();
+    let view = View::new( start_x, start_y, vec![_b, _s] );
+    view.render(&view);
     let mut ch = getch();
-    while ch != KEY_F(1) {
+    while ch != 0x71 {
         // This block is necessary to avoid deadlock
         {
             let mut s = s.lock().unwrap();
             let b = board.lock().unwrap();
             s.moves(ch, &b);
         }
-        view.render();
+        view.render(&view);
         ch = getch();
     }
 
