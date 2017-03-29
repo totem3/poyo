@@ -1,4 +1,5 @@
 extern crate ncurses;
+extern crate rand;
 
 mod board;
 mod chr;
@@ -37,11 +38,7 @@ fn main() {
     let x = start_x + 1;
     let y = start_y + 1;
 
-    let s = Arc::new(Mutex::new(Chr::new(
-        (Color::Red, Color::Blue),
-        (x, y),
-        Orient::V
-    )));
+    let s = Arc::new(Mutex::new(Chr::rand()));
 
     let _b = board.clone();
     let _s = s.clone();

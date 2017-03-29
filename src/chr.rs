@@ -1,6 +1,7 @@
 use ncurses::*;
 use view::Renderable;
 use board::Board;
+use rand::random;
 
 const KEY_SPACE: i32 = 0x20;
 
@@ -25,6 +26,13 @@ impl Chr {
             position,
             orient
         }
+    }
+
+    pub fn rand() -> Self {
+        let colors = (Color::rand(), Color::rand());
+        let position = (2, 0);
+        let orient = Orient::V;
+        Chr::new(colors, position, orient)
     }
     pub fn x(&self) -> i32 {
         self.position.0
@@ -176,6 +184,24 @@ pub enum Color {
     Blue = 4,
 }
 
+impl ::std::convert::From<u8> for Color {
+    fn from(v:u8)->Self {
+        match v {
+            1 => Color::Red,
+            2 => Color::Green,
+            3 => Color::Yellow,
+            4 => Color::Blue,
+            _ => Color::Red
+        }
+    }
+}
+
+impl Color {
+    pub fn rand() -> Self {
+        let v:u8 = random();// % 4 + 1;
+        Color::from(v % 4 + 1)
+    }
+}
 
 impl Renderable for Chr {
     fn render(&self) {

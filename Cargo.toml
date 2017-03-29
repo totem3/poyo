@@ -5,3 +5,4 @@ authors = ["Takafumi Hirata <takhirata6@gmail.com>"]
 
 [dependencies]
 ncurses = "*"
+rand = "0.3"
