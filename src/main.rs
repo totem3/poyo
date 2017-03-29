@@ -19,21 +19,8 @@ static BOARD_WIDTH: i32 = 6 + 2;
 const KEY_SPACE: i32 = 0x20;
 
 fn main() {
-    initscr();
-    raw();
-
-    keypad(stdscr(), true);
-    noecho();
-
-    curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-
-    refresh();
-
-    start_color();
-    init_pair(Color::Red as i16, 0, 1);
-    init_pair(Color::Green as i16, 0, 2);
-    init_pair(Color::Yellow as i16, 0, 3);
-    init_pair(Color::Blue as i16, 0, 4);
+    View::init_view();
+    chr::init_colors();
 
     let mut max_x = 0;
     let mut max_y = 0;

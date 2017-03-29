@@ -129,6 +129,15 @@ fn color_view(c: Color) -> &'static str {
     }
 }
 
+pub fn init_colors() {
+    start_color();
+    init_pair(Color::Red as i16, 0, 1);
+    init_pair(Color::Green as i16, 0, 2);
+    init_pair(Color::Yellow as i16, 0, 3);
+    init_pair(Color::Blue as i16, 0, 4);
+
+}
+
 macro_rules! colored {
    ($c:expr => { $x:stmt }) => ( attron(COLOR_PAIR($c as i16)); $x; attroff(COLOR_PAIR($c as i16)););
 }
