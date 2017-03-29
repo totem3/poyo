@@ -16,7 +16,6 @@ use view::Renderable;
 
 static BOARD_HEIGHT: i32 = 12 + 2;
 static BOARD_WIDTH: i32 = 6 + 2;
-const KEY_SPACE: i32 = 0x20;
 
 fn main() {
     View::init_view();
@@ -50,35 +49,11 @@ fn main() {
     view.render();
     let mut ch = getch();
     while ch != KEY_F(1) {
-        match ch {
-            KEY_LEFT => {
-                let mut s = s.lock().unwrap();
-                let b = board.lock().unwrap();
-                if s.can_move_left(&b) {
-                    s.left();
-                }
-            }
-            KEY_RIGHT => {
-                let mut s = s.lock().unwrap();
-                let b = board.lock().unwrap();
-                if s.can_move_right(&b) {
-                    s.right();
-                }
-            }
-            KEY_UP => {}
-            KEY_DOWN => {
-                let mut s = s.lock().unwrap();
-                let b = board.lock().unwrap();
-                if s.can_move_down(&b) {
-                    s.down();
-                }
-            }
-            KEY_SPACE => {
-                let mut s = s.lock().unwrap();
-                let b = board.lock().unwrap();
-                s.rotate(&b);
-            }
-            _ => break,
+        // This block is necessary to avoid deadlock
+        {
+            let mut s = s.lock().unwrap();
+            let b = board.lock().unwrap();
+            s.moves(ch, &b);
         }
         view.render();
         ch = getch();

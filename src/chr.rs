@@ -2,6 +2,8 @@ use ncurses::*;
 use view::Renderable;
 use board::Board;
 
+const KEY_SPACE: i32 = 0x20;
+
 #[derive(Debug,Clone)]
 pub enum Orient {
     V,
@@ -116,6 +118,30 @@ impl Chr {
             false
         } else {
             true
+        }
+    }
+
+    pub fn moves(&mut self, input: i32, board: &Board) {
+        match input {
+            KEY_LEFT => {
+                if self.can_move_left(board) {
+                    self.left();
+                }
+            }
+            KEY_RIGHT => {
+                if self.can_move_right(board) {
+                    self.right();
+                }
+            }
+            KEY_DOWN => {
+                if self.can_move_down(board) {
+                    self.down();
+                }
+            }
+            KEY_SPACE => {
+                self.rotate(board);
+            }
+            _ => {},
         }
     }
 }
