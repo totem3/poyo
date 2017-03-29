@@ -158,7 +158,7 @@ fn color_view(c: Color) -> &'static str {
     match c {
         Color::Red => "*",
         Color::Green => "@",
-        Color::Yellow => "%",
+        Color::Yellow => ".",
         Color::Blue => "+",
     }
 }
