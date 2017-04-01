@@ -12,11 +12,11 @@ pub trait Renderable {
 pub struct View {
     pub x: i32,
     pub y: i32,
-    objects: Vec<Arc<Mutex<Renderable>>>,
+    objects: Vec<Arc<Mutex<Renderable+Send>>>,
 }
 
 impl View {
-    pub fn new(x:i32, y:i32, objects: Vec<Arc<Mutex<Renderable>>>) -> Self {
+    pub fn new(x:i32, y:i32, objects: Vec<Arc<Mutex<Renderable+Send>>>) -> Self {
         View { x, y, objects }
     }
 
@@ -43,6 +43,7 @@ impl Renderable for View {
         for o in &self.objects {
             let o = o.lock().unwrap();
             o.render(view);
+            refresh();
         }
     }
 }

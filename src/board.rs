@@ -44,7 +44,7 @@ impl Board {
 
     fn destroy(&self, view: &View) {
         let ch = ' ' as chtype;
-        let win = newwin(self.height, self.width, view.y, view.x);
+        let win = newwin(self.height - 2, self.width - 2, view.y + 1, view.x + 1);
         wborder(win, ch, ch, ch, ch, ch, ch, ch, ch);
         wrefresh(win);
         delwin(win);
