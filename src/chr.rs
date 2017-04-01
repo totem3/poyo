@@ -2,6 +2,7 @@ use ncurses::*;
 use view::{View, Renderable};
 use board::Board;
 use rand::random;
+use std::cmp::{min,max};
 
 const KEY_SPACE: i32 = 0x20;
 
@@ -66,6 +67,18 @@ impl Chr {
     pub fn down(&mut self) {
         self.position.1 += 1;
     }
+    pub fn leftmost(&self) -> i32 {
+        min(self.x(),self.x2())
+    }
+    pub fn rightmost(&self) -> i32 {
+        max(self.x(),self.x2())
+    }
+    pub fn topmost(&self) -> i32 {
+        min(self.y(),self.y2())
+    }
+    pub fn bottommost(&self) -> i32 {
+        max(self.y(),self.y2())
+    }
     pub fn rotate(&mut self, board: &Board) {
         let (top, right, bottom, left) = board.rectangle();
         self.orient = match self.orient {
@@ -99,44 +112,27 @@ impl Chr {
     }
 
     pub fn can_move_left(&self, board: &Board) -> bool {
-        let after = match self.orient {
-            Orient::RH => self.x() - 2,
-            _ => self.x() - 1,
-        };
-        if after <= board.leftmost() {
+        let x = self.leftmost() - 1;
+        let y = self.bottommost();
+        if x <= board.leftmost() || board.is_filled(x, y) {
             false
         } else {
             true
         }
     }
     pub fn can_move_right(&self, board: &Board) -> bool {
-        let after = match self.orient {
-            Orient::H => self.x() + 2,
-            _ => self.x() + 1,
-        };
-        if after >= board.rightmost() {
-            false
-        } else {
-            true
-        }
-    }
-    pub fn can_move_up(&self, board: &Board) -> bool {
-        let after = match self.orient {
-            Orient::RV => self.y() - 2,
-            _ => self.y() - 1,
-        };
-        if after <= board.topmost() {
+        let x = self.rightmost() + 1;
+        let y = self.bottommost();
+        if x >= board.rightmost() || board.is_filled(x, y){
             false
         } else {
             true
         }
     }
     pub fn can_move_down(&self, board: &Board) -> bool {
-        let after = match self.orient {
-            Orient::V => self.y() + 2,
-            _ => self.y() + 1,
-        };
-        if after >= board.bottommost() {
+        let x = self.x();
+        let y = self.bottommost() + 1;
+        if y >= board.bottommost() || board.is_filled(x, y) {
             false
         } else {
             true
@@ -144,7 +140,7 @@ impl Chr {
     }
 
     pub fn is_bottom(&self, board: &Board) -> bool {
-        self.can_move_down(board)
+        !self.can_move_down(board)
     }
 
     pub fn moves(&mut self, input: i32, board: &Board) {
@@ -170,14 +166,11 @@ impl Chr {
             _ => {},
         }
     }
-}
 
-fn color_view(c: Color) -> &'static str {
-    match c {
-        Color::Red => "*",
-        Color::Green => "@",
-        Color::Yellow => ".",
-        Color::Blue => "+",
+    pub fn replace(&mut self, other: Self) {
+        self.colors = other.colors;
+        self.position = other.position;
+        self.orient = other.orient;
     }
 }
 
@@ -219,17 +212,28 @@ impl Color {
         let v:u8 = random();
         Color::from(v % 4 + 1)
     }
+
+    pub fn symbol(&self) -> &'static str {
+        match self {
+            &Color::Red => "*",
+            &Color::Green => "@",
+            &Color::Yellow => ".",
+            &Color::Blue => "+",
+        }
+    }
+
 }
+
 
 impl Renderable for Chr {
     fn render(&self, view: &View) {
-        let p = color_view(self.colors.0);
+        let p = self.colors.0.symbol();
         let x = self.x() + view.x;
         let y = self.y() + view.y;
         colored!(self.colors.0 => {
             mvprintw(y, x, p)
         });
-        let s = color_view(self.colors.1);
+        let s = self.colors.1.symbol();
         colored!(self.colors.1 => {
             mvprintw(self.y2() + view.y, self.x2()+view.x, s)
         });

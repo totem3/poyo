@@ -46,7 +46,7 @@ fn main() {
     });
 
     {
-        let s = s.clone();
+        let mut s = s.clone();
         let board = board.clone();
         let _ = thread::spawn(move || {
             loop {
@@ -58,10 +58,11 @@ fn main() {
                         s.down();
                     }
                 }
-                let s = s.lock().unwrap();
+                let mut s = s.lock().unwrap();
                 let mut b = board.lock().unwrap();
                 if s.is_bottom(&b) {
                     b.add(&s);
+                    s.replace(Chr::rand());
                 }
             }
         });
