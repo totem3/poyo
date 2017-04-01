@@ -1,6 +1,6 @@
 use ncurses::*;
 use view::{View,Renderable};
-use chr::Color;
+use chr::{Chr,Color};
 
 #[derive(Debug)]
 pub struct Board {
@@ -34,6 +34,13 @@ impl Board {
 
     pub fn bottommost(&self) -> i32 {
         self.height - 1
+    }
+
+    pub fn add(&mut self, p:&Chr) {
+        let (x, y) = (p.x(), p.y());
+        let (x2, y2) = (p.x2(), p.y2());
+        self.rows[y as usize][x as usize] = p.colors.0;
+        self.rows[y2 as usize][x2 as usize] = p.colors.1;
     }
 
     fn create(&self, view: &View) {

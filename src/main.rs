@@ -51,10 +51,17 @@ fn main() {
         let _ = thread::spawn(move || {
             loop {
                 thread::sleep(Duration::new(1,0));
-                let mut s = s.lock().unwrap();
-                let b = board.lock().unwrap();
-                if s.can_move_down(&b) {
-                    s.down();
+                {
+                    let mut s = s.lock().unwrap();
+                    let b = board.lock().unwrap();
+                    if s.can_move_down(&b) {
+                        s.down();
+                    }
+                }
+                let s = s.lock().unwrap();
+                let mut b = board.lock().unwrap();
+                if s.is_bottom(&b) {
+                    b.add(&s);
                 }
             }
         });

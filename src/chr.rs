@@ -14,7 +14,7 @@ pub enum Orient {
 }
 #[derive(Clone)]
 pub struct Chr {
-    colors: (Color, Color),
+    pub colors: (Color, Color),
     position: (i32, i32),
     orient: Orient,
 }
@@ -39,6 +39,20 @@ impl Chr {
     }
     pub fn y(&self) -> i32 {
         self.position.1
+    }
+    pub fn x2(&self) -> i32 {
+        match self.orient {
+            Orient::V | Orient::RV => self.x(),
+            Orient::H => self.x()+1,
+            Orient::RH => self.x()-1,
+        }
+    }
+    pub fn y2(&self) -> i32 {
+        match self.orient {
+            Orient::H | Orient::RH => self.y(),
+            Orient::V => self.y()+1,
+            Orient::RV => self.y()-1,
+        }
     }
     pub fn left(&mut self) {
         self.position.0 -= 1;
@@ -129,6 +143,10 @@ impl Chr {
         }
     }
 
+    pub fn is_bottom(&self, board: &Board) -> bool {
+        self.can_move_down(board)
+    }
+
     pub fn moves(&mut self, input: i32, board: &Board) {
         match input {
             KEY_LEFT => {
@@ -213,12 +231,7 @@ impl Renderable for Chr {
         });
         let s = color_view(self.colors.1);
         colored!(self.colors.1 => {
-            match self.orient {
-                Orient::V => mvprintw(y + 1, x, s),
-                Orient::H => mvprintw(y, x + 1, s),
-                Orient::RV => mvprintw(y - 1, x, s),
-                Orient::RH => mvprintw(y, x - 1, s),
-            }
+            mvprintw(self.y2() + view.y, self.x2()+view.x, s)
         });
     }
 }
