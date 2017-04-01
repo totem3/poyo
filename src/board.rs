@@ -1,6 +1,6 @@
 use ncurses::*;
 use view::{View,Renderable};
-use chr::{Chr,Color};
+use yopi::{YopiYopi,Color};
 
 #[derive(Debug)]
 pub struct Board {
@@ -41,11 +41,13 @@ impl Board {
         self.height - 1
     }
 
-    pub fn add(&mut self, p:&Chr) {
+    pub fn add(&mut self, p: &YopiYopi) {
+        let mut p = p.clone();
+        p.to_bottom(self);
         let (x, y) = (p.x()-1, p.y()-1);
         let (x2, y2) = (p.x2()-1, p.y2()-1);
-        self.rows[y as usize][x as usize] = Some(p.colors.0);
-        self.rows[y2 as usize][x2 as usize] = Some(p.colors.1);
+        self.rows[y as usize][x as usize] = Some(p.colors().0);
+        self.rows[y2 as usize][x2 as usize] = Some(p.colors().1);
     }
 
     pub fn is_filled(&self, x:i32, y:i32) -> bool {

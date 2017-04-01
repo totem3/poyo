@@ -2,7 +2,7 @@ extern crate ncurses;
 extern crate rand;
 
 mod board;
-mod chr;
+mod yopi;
 mod view;
 
 use ncurses::*;
@@ -11,7 +11,7 @@ use std::thread;
 use std::time::Duration;
 
 use board::Board;
-use chr::Chr;
+use yopi::YopiYopi;
 use view::View;
 use view::Renderable;
 
@@ -20,7 +20,7 @@ const BOARD_WIDTH: i32 = 6 + 2;
 
 fn main() {
     let (start_x, start_y) = View::init_view();
-    chr::init_colors();
+    yopi::init_colors();
 
     let board = Board::new (
         BOARD_WIDTH,
@@ -28,9 +28,9 @@ fn main() {
         Vec::new(),
     );
 
-    let s = Chr::rand();
+    let s = YopiYopi::rand();
 
-    // Renderableのvecとして渡しつつ、他ではChrとかBoardそのものとして扱いたいんだけどどうすればいいのか
+    // Renderableのvecとして渡しつつ、他ではYopiYopiとかBoardそのものとして扱いたいんだけどどうすればいいのか
     // + Send が必要なだけだった
     let board = Arc::new(Mutex::new(board));
     let s = Arc::new(Mutex::new(s));
@@ -62,7 +62,7 @@ fn main() {
                 let mut b = board.lock().unwrap();
                 if s.is_bottom(&b) {
                     b.add(&s);
-                    s.replace(Chr::rand());
+                    s.replace(YopiYopi::rand());
                 }
             }
         });
