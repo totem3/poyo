@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex};
 
 use board::Board;
 use chr::Chr;
-use chr::Color;
 use view::View;
 use view::Renderable;
 
