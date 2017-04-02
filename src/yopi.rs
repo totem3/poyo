@@ -3,7 +3,6 @@ use view::{View, Renderable};
 use board::Board;
 use rand::random;
 use std::cmp::{min, max};
-use std::default::Default;
 
 const KEY_SPACE: i32 = 0x20;
 
@@ -165,12 +164,19 @@ impl YopiYopi {
         max(self.y(), self.y2())
     }
     pub fn rotate(&mut self, board: &Board) {
-        let (top, right, bottom, left) = board.rectangle();
         match self.orient {
             Orient::V => {
-                self.orient = Orient::H;
-                self.yopis.1.right();
-                self.yopis.1.up();
+                if board.is_filled(self.x()+1, self.y()) {
+                    if !board.is_filled(self.x()-1, self.y()) {
+                        self.orient = Orient::H;
+                        self.yopis.0.left();
+                        self.yopis.1.up();
+                    }
+                } else {
+                    self.orient = Orient::H;
+                    self.yopis.1.right();
+                    self.yopis.1.up();
+                }
             },
             Orient::H => {
                 self.orient = Orient::RV;
@@ -178,9 +184,17 @@ impl YopiYopi {
                 self.yopis.1.up();
             },
             Orient::RV => {
-                self.orient = Orient::RH;
-                self.yopis.1.left();
-                self.yopis.1.down();
+                if board.is_filled(self.x()-1, self.y()) {
+                    if !board.is_filled(self.x()+1, self.y()) {
+                        self.orient = Orient::RH;
+                        self.yopis.0.right();
+                        self.yopis.1.down();
+                    }
+                } else {
+                    self.orient = Orient::RH;
+                    self.yopis.1.left();
+                    self.yopis.1.down();
+                }
             },
             Orient::RH => {
                 self.orient = Orient::V;
@@ -190,22 +204,22 @@ impl YopiYopi {
         }
         match self.orient {
             Orient::V => {
-                if self.y() == bottom - 1 {
+                if board.is_filled(self.x(), self.y2()) {
                     self.up();
                 }
             }
             Orient::H => {
-                if self.x() == right - 1 {
+                if board.is_filled(self.x2(), self.y()) {
                     self.left();
                 }
             }
             Orient::RV => {
-                if self.y() == top + 1 {
+                if board.is_filled(self.x(), self.y2()) {
                     self.down();
                 }
             }
             Orient::RH => {
-                if self.x() == left + 1 {
+                if board.is_filled(self.x2(), self.y()) {
                     self.right();
                 }
             }
@@ -233,7 +247,7 @@ impl YopiYopi {
     pub fn can_move_down(&self, board: &Board) -> bool {
         let x = self.x();
         let y = self.bottommost() + 1;
-        if y >= board.bottommost() || board.is_filled(x, y) {
+        if y >= board.bottommost() || board.is_filled(x, y) || board.is_filled(self.x2(), y) {
             false
         } else {
             true

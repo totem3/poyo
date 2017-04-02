@@ -46,7 +46,7 @@ fn main() {
     });
 
     {
-        let mut s = s.clone();
+        let s = s.clone();
         let board = board.clone();
         let _ = thread::spawn(move || {
             loop {
@@ -83,11 +83,13 @@ fn main() {
     });
 
     match t.join() {
-        Ok(_) => {},
+        Ok(_) => {
+            endwin();
+        },
         Err(_) => {
+            endwin();
             println!("child process is dead");
         }
     };
 
-    endwin();
 }

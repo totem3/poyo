@@ -34,7 +34,7 @@ impl Board {
     }
 
     pub fn topmost(&self) -> i32 {
-        9
+        0
     }
 
     pub fn bottommost(&self) -> i32 {
@@ -51,7 +51,7 @@ impl Board {
     }
 
     pub fn is_filled(&self, x:i32, y:i32) -> bool {
-        if x > 6 {
+        if x <= 0 || y <= 0 || x > 6 || y > 12 {
             return true;
         }
         self.rows[(y-1) as usize][(x-1) as usize].is_some()
