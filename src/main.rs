@@ -30,7 +30,7 @@ fn main() {
     let s = YopiYopi::rand();
 
     // Renderableのvecとして渡しつつ、他ではYopiYopiとかBoardそのものとして扱いたいんだけどどうすればいいのか
-    // + Send が必要なだけだった
+    // → + Send が必要なだけだった
     let board = Arc::new(Mutex::new(board));
     let s = Arc::new(Mutex::new(s));
     let mut objects:Vec<Arc<Mutex<Renderable+Send>>> = Vec::new();
