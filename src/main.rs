@@ -24,8 +24,7 @@ fn main() {
 
     let board = Board::new (
         BOARD_WIDTH,
-        BOARD_HEIGHT,
-        Vec::new(),
+        BOARD_HEIGHT
     );
 
     let s = YopiYopi::rand();

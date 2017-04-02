@@ -14,7 +14,7 @@ macro_rules! colored {
 }
 
 impl Board {
-    pub fn new(width:i32,height:i32,rows:Vec<Vec<Option<Color>>>) -> Self {
+    pub fn new(width:i32,height:i32) -> Self {
         let rows = vec![vec![None;6]; 12];
         Board {
             width,
