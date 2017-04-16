@@ -1,4 +1,3 @@
-use direction::Direction;
 use field::PoyoRows;
 
 #[derive(Debug)]

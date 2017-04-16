@@ -1,6 +1,5 @@
 use ncurses::*;
 use std::thread;
-use observer::MutObserver;
 use observable::{MutObservable, MutObserverRef};
 use event::Event;
 
@@ -22,7 +21,7 @@ impl Input {
                                   }
                                   self.notify(&Event::Exit);
                               });
-        t.join();
+        let _ = t.join();
     }
 
     fn notify(&self, event: &Event) {

@@ -1,5 +1,4 @@
 use std::default::Default;
-use std::io::{Write, stderr};
 use std::ops::{Index, IndexMut};
 
 use poyo::Poyo;
@@ -8,7 +7,6 @@ use size::Size;
 use direction::Direction;
 use direction::Direction::*;
 use observable::{MutObserverRef, MutObservable};
-use std::sync::Weak;
 use event::Event;
 use position::Position;
 
@@ -92,7 +90,7 @@ impl Field {
     }
 
     pub fn fix_current(&mut self) {
-        if let Some(mut c) = self.current.take() {
+        if let Some(_) = self.current.take() {
             self.fall_poyos();
             while self.check() > 0 {
                 self.fall_poyos();
@@ -267,8 +265,8 @@ impl Field {
     pub fn check(&mut self) -> usize {
         let poyos = self.poyos.clone();
         let mut removed = 0;
-        for (y, row) in poyos.iter().enumerate() {
-            for (x, col) in row.iter().enumerate() {
+        for row in poyos.iter() {
+            for col in row.iter() {
                 if let &Some(v) = col {
                     let (count, counted) = v.count_same_color(&self);
                     if count >= 4 {

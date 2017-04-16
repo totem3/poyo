@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Mutex, Weak};
 use observer::{Observer, MutObserver};
 
 pub type ObserverRef = Weak<Mutex<Observer + Sync + Send>>;

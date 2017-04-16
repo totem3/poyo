@@ -18,14 +18,13 @@ use input::Input;
 use event::Event;
 use observable::MutObservable;
 use observer::MutObserver;
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Mutex};
 use std::thread;
-use std::convert::AsRef;
 use field::Field;
 use direction::Direction;
 use size::Size;
 use poyopoyo::PoyoPoyo;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 struct Main {
     done: bool,

@@ -6,8 +6,6 @@ use size::Size;
 use field::PoyoRows;
 use color::Color;
 
-use std::io::{self, Write};
-
 pub struct CliView {
     max_size: Size,
     size: Size,
@@ -51,8 +49,8 @@ impl CliView {
     pub fn draw(&self) {
         let win: WINDOW = newwin(14, 8, 0, 0);
         box_(win, 0, 0);
-        for (y, row) in self.poyos.iter().enumerate() {
-            for (x, col) in row.iter().enumerate() {
+        for row in self.poyos.iter() {
+            for col in row.iter() {
                 if let &Some(p) = col {
                     CliView::print(win, &p);
                 }
