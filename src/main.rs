@@ -132,7 +132,6 @@ impl Main {
     }
 }
 
-
 impl MutObserver for Main {
     fn notify_mut(&mut self, event: &Event) {
         match event {
