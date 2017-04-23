@@ -2,7 +2,6 @@ use ncurses::*;
 use std::thread;
 use event::Event;
 use std::sync::mpsc::Sender;
-use std::io::{stderr, Write};
 
 pub struct Input {
     tx: Sender<Event>,
@@ -15,13 +14,12 @@ impl Input {
 
     pub fn run(self) {
         let _ = thread::spawn(move || {
-            let mut ch = getch();
-            while ch != 0x71 {
-                writeln!(stderr(), "loop {}", ch);
-                self.tx.send(Event::Input(ch));
-                ch = getch();
-            }
-            self.tx.send(Event::Exit);
-        });
+                                  let mut ch = getch();
+                                  while ch != 0x71 {
+                                      self.tx.send(Event::Input(ch));
+                                      ch = getch();
+                                  }
+                                  self.tx.send(Event::Exit);
+                              });
     }
 }

@@ -23,8 +23,6 @@ use poyopoyo::PoyoPoyo;
 use std::time::SystemTime;
 use std::sync::mpsc::{channel, Sender, Receiver};
 
-use std::io::{stderr, Write};
-
 struct Main {
     done: bool,
     field: Field,
@@ -108,7 +106,6 @@ impl Main {
                 Ok(Event::FrameUpdate) => self.on_frame(),
                 Ok(Event::Exit) => self.done = true,
                 Ok(Event::Input(i)) => {
-                    writeln!(stderr(), "input {}", i);
                     match i {
                         ncurses::KEY_LEFT => self.field.move_current(Direction::Left),
                         ncurses::KEY_RIGHT => self.field.move_current(Direction::Right),
