@@ -1,10 +1,10 @@
 use ncurses::*;
 use event::Event;
-use observer::MutObserver;
 use poyo::Poyo;
 use size::Size;
 use field::PoyoRows;
 use color::Color;
+use std::sync::mpsc::Receiver;
 
 pub struct CliView {
     max_size: Size,
@@ -89,13 +89,8 @@ impl CliView {
     pub fn height(&self) -> usize {
         self.size.height
     }
-}
 
-impl MutObserver for CliView {
-    fn notify_mut(&mut self, event: &Event) {
-        match event {
-            &Event::MovePoyo(f) => self.poyos = f.clone(),
-            _ => {}
-        }
+    pub fn update(&mut self, poyos: PoyoRows) {
+        self.poyos = poyos;
     }
 }

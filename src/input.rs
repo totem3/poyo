@@ -1,41 +1,27 @@
 use ncurses::*;
 use std::thread;
-use observable::{MutObservable, MutObserverRef};
 use event::Event;
+use std::sync::mpsc::Sender;
+use std::io::{stderr, Write};
 
 pub struct Input {
-    observers: Vec<MutObserverRef>,
+    tx: Sender<Event>,
 }
 
 impl Input {
-    pub fn new() -> Self {
-        Input { observers: vec![] }
+    pub fn new(tx: Sender<Event>) -> Self {
+        Input { tx: tx }
     }
 
     pub fn run(self) {
-        let t = thread::spawn(move || {
-                                  let mut ch = getch();
-                                  while ch != 0x71 {
-                                      self.notify(&Event::Input(ch));
-                                      ch = getch();
-                                  }
-                                  self.notify(&Event::Exit);
-                              });
-        let _ = t.join();
-    }
-
-    fn notify(&self, event: &Event) {
-        for observer in &self.observers {
-            if let Some(observer) = observer.upgrade() {
-                let mut o = observer.lock().unwrap();
-                o.notify_mut(event);
+        let _ = thread::spawn(move || {
+            let mut ch = getch();
+            while ch != 0x71 {
+                writeln!(stderr(), "loop {}", ch);
+                self.tx.send(Event::Input(ch));
+                ch = getch();
             }
-        }
-    }
-}
-
-impl MutObservable for Input {
-    fn register_mut(&mut self, observer: MutObserverRef) {
-        self.observers.push(observer);
+            self.tx.send(Event::Exit);
+        });
     }
 }

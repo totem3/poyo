@@ -1,4 +1,3 @@
-use std::default::Default;
 use std::ops::{Index, IndexMut};
 
 use poyo::Poyo;
@@ -6,17 +5,17 @@ use poyopoyo::PoyoPoyo;
 use size::Size;
 use direction::Direction;
 use direction::Direction::*;
-use observable::{MutObserverRef, MutObservable};
 use event::Event;
 use position::Position;
+use std::sync::mpsc::Sender;
 
 pub type PoyoRows = Vec<Vec<Option<Poyo>>>;
 
 pub struct Field {
-    observers: Vec<MutObserverRef>,
     size: Size,
     current: Option<PoyoPoyo>,
     poyos: PoyoRows,
+    tx: Sender<Event>,
 }
 
 impl Index<Position> for Field {
@@ -32,20 +31,14 @@ impl IndexMut<Position> for Field {
     }
 }
 
-impl MutObservable for Field {
-    fn register_mut(&mut self, observer: MutObserverRef) {
-        self.observers.push(observer);
-    }
-}
-
 impl Field {
-    pub fn new(size: Size) -> Self {
+    pub fn new(tx: Sender<Event>, size: Size) -> Self {
         let poyos = vec![vec![None; size.width]; size.height];
         Field {
             size,
             current: None,
             poyos,
-            observers: vec![],
+            tx,
         }
     }
 
@@ -102,21 +95,11 @@ impl Field {
     }
 
     fn update(&self) {
-        for o in &self.observers {
-            if let Some(observer) = o.upgrade() {
-                let mut observer = observer.lock().unwrap();
-                observer.notify_mut(&Event::MovePoyo(&self.poyos))
-            }
-        }
+        self.tx.send(Event::MovePoyo(self.poyos.clone()));
     }
 
     pub fn on_init(&self) {
-        for o in &self.observers {
-            if let Some(observer) = o.upgrade() {
-                let mut observer = observer.lock().unwrap();
-                observer.notify_mut(&Event::MovePoyo(&self.poyos))
-            }
-        }
+        self.update();
     }
 
     pub fn set_current(&mut self, v: PoyoPoyo) {
@@ -279,13 +262,6 @@ impl Field {
             }
         }
         removed
-    }
-}
-
-impl Default for Field {
-    fn default() -> Self {
-        let size = Size::new(6, 12);
-        Field::new(size)
     }
 }
 

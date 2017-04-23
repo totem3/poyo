@@ -6,8 +6,6 @@ mod color;
 mod direction;
 mod event;
 mod field;
-mod observer;
-mod observable;
 mod position;
 mod poyo;
 mod poyopoyo;
@@ -16,8 +14,6 @@ mod input;
 
 use input::Input;
 use event::Event;
-use observable::MutObservable;
-use observer::MutObserver;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use field::Field;
@@ -25,102 +21,75 @@ use direction::Direction;
 use size::Size;
 use poyopoyo::PoyoPoyo;
 use std::time::SystemTime;
+use std::sync::mpsc::{channel, Sender, Receiver};
+
+use std::io::{stderr, Write};
 
 struct Main {
     done: bool,
     field: Field,
-    view: Arc<Mutex<cli::CliView>>,
+    view: cli::CliView,
+    rx: Receiver<Event>,
 }
 
 fn main() {
-    let mut input = Input::new();
-    let mut field = Field::default();
+    let (tx, rx) = channel();
+    let mut field = Field::new(tx.clone(), Size::new(6, 12));
     let pp = PoyoPoyo::rand();
     field.set_current(pp);
     let cv = cli::CliView::new(Size::new(field.width() + 2, field.height() + 2));
-    let cv = Arc::new(Mutex::new(cv));
-    let weak_ref_cv = Arc::downgrade(&cv);
-    field.register_mut(weak_ref_cv);
-    let m = Main {
+    let mut input = Input::new(tx.clone());
+    let mut m = Main {
         done: false,
         view: cv,
         field: field,
+        rx: rx,
     };
-    let acm = Arc::new(Mutex::new(m));
-    let _acm = acm.clone();
-    let wm = Arc::downgrade(&_acm);
-    input.register_mut(wm);
+    m.on_init();
+
     {
-        let m = acm.lock().unwrap();
-        m.on_init();
-    }
-    {
-        // main
-        let m = acm.clone();
+        let mut tx = tx.clone();
         let mut time = SystemTime::now();
         let mut frame = 0;
         let mut tick = 0;
         thread::spawn(move || loop {
-                          match m.lock() {
-                              Ok(mut m) => {
-                if m.done {
-                    break;
-                }
-                m.on_frame();
-                let _time = SystemTime::now();
-                match _time.duration_since(time) {
-                    Ok(diff) => {
-                        frame += diff.subsec_nanos();
-                        tick += diff.subsec_nanos();
-                        time = _time
-                    }
-                    Err(_) => {}
-                };
-                if frame > 150 * 1000000 {
-                    m.on_frame();
-                    frame = 0;
-                }
-                if tick > 1000 * 1000000 {
-                    m.tick();
-                    tick = 0;
-                }
+                          let _time = SystemTime::now();
+                          match _time.duration_since(time) {
+                              Ok(diff) => {
+                frame += diff.subsec_nanos();
+                tick += diff.subsec_nanos();
+                time = _time
             }
                               Err(_) => {}
+                          };
+                          if frame > 150 * 1000000 {
+                              tx.send(Event::FrameUpdate);
+                              frame = 0;
+                          }
+                          if tick > 1000 * 1000000 {
+                              tx.send(Event::Tick);
+                              tick = 0;
                           }
                       });
     }
     input.run();
-    {
-        let m = acm.lock().unwrap();
-        m.on_exit();
-    }
+    m.main();
+    m.on_exit();
 }
 
 impl Main {
     fn on_init(&self) {
-        match self.view.try_lock() {
-            Ok(v) => v.init(),
-            Err(_) => {
-                panic!("failed to get lock");
-            }
-        }
+        self.view.init();
         self.field.on_init();
     }
 
-    fn on_frame(&self) {
-        match self.view.try_lock() {
-            Ok(v) => v.draw(),
-            Err(_) => {}
-        }
+    fn on_frame(&mut self) {
+        // self.view.update();
+        self.view.draw();
     }
 
     fn on_exit(&self) {
-        match self.view.try_lock() {
-            Ok(v) => v.exit(),
-            Err(_) => {
-                panic!("failed to get lock");
-            }
-        }
+        self.view.exit();
     }
 
     fn tick(&mut self) {
@@ -130,22 +99,26 @@ impl Main {
             self.field.fix_current();
         }
     }
-}
 
-impl MutObserver for Main {
-    fn notify_mut(&mut self, event: &Event) {
-        match event {
-            &Event::Exit => self.done = true,
-            &Event::Input(i) => {
-                match i {
-                    ncurses::KEY_LEFT => self.field.move_current(Direction::Left),
-                    ncurses::KEY_RIGHT => self.field.move_current(Direction::Right),
-                    ncurses::KEY_DOWN => self.field.move_current(Direction::Down),
-                    0x20 => self.field.rotate_current(),
-                    _ => {}
+    fn main(&mut self) {
+        while !self.done {
+            match self.rx.try_recv() {
+                Ok(Event::MovePoyo(poyos)) => self.view.update(poyos),
+                Ok(Event::Tick) => self.tick(),
+                Ok(Event::FrameUpdate) => self.on_frame(),
+                Ok(Event::Exit) => self.done = true,
+                Ok(Event::Input(i)) => {
+                    writeln!(stderr(), "input {}", i);
+                    match i {
+                        ncurses::KEY_LEFT => self.field.move_current(Direction::Left),
+                        ncurses::KEY_RIGHT => self.field.move_current(Direction::Right),
+                        ncurses::KEY_DOWN => self.field.move_current(Direction::Down),
+                        0x20 => self.field.rotate_current(),
+                        _ => {}
+                    }
                 }
+                _ => {}
             }
-            _ => {}
         }
     }
 }
