@@ -1,7 +1,7 @@
 use rand::random;
 use std::convert::From;
 
-#[derive(Debug,Clone,Copy,PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Color {
     Red = 1,
     Green = 2,

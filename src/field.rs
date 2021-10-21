@@ -1,12 +1,12 @@
 use std::ops::{Index, IndexMut};
 
-use poyo::Poyo;
-use poyopoyo::PoyoPoyo;
-use size::Size;
 use direction::Direction;
 use direction::Direction::*;
 use event::Event;
 use position::Position;
+use poyo::Poyo;
+use poyopoyo::PoyoPoyo;
+use size::Size;
 use std::sync::mpsc::Sender;
 
 pub type PoyoRows = Vec<Vec<Option<Poyo>>>;
@@ -82,20 +82,29 @@ impl Field {
         }
     }
 
-    pub fn fix_current(&mut self) {
-        if let Some(_) = self.current.take() {
+    pub fn fix_current(&mut self) -> Option<(usize, (i32, i32))> {
+        if let Some(c) = self.current.take() {
             self.fall_poyos();
-            while self.check() > 0 {
+            let mut removed_count = 0;
+            loop {
+                let removed = self.check();
+                removed_count += removed;
+                if removed <= 0 {
+                    break;
+                }
                 self.fall_poyos();
             }
             self.current = Some(PoyoPoyo::rand());
             self.update_field();
             self.update();
+            Some((removed_count, (c.left(), c.top())))
+        } else {
+            None
         }
     }
 
     fn update(&self) {
-        self.tx.send(Event::MovePoyo(self.poyos.clone()));
+        let _ = self.tx.send(Event::MovePoyo(self.poyos.clone()));
     }
 
     pub fn on_init(&self) {
@@ -111,7 +120,7 @@ impl Field {
     }
 
     pub fn update_field(&mut self) {
-        let mut new_field = vec![vec![None;self.size.width]; self.size.height];
+        let mut new_field = vec![vec![None; self.size.width]; self.size.height];
         for ps in self.poyos.clone() {
             for p in ps {
                 if let Some(p) = p {
@@ -220,7 +229,7 @@ impl Field {
         let mut res = Vec::with_capacity(self.poyos.len());
         for row in &self.poyos {
             let somes: Vec<&Option<Poyo>> = row.iter().filter(|c| c.is_some()).collect();
-            let mut new_row = vec![None; row.len()-somes.len()];
+            let mut new_row = vec![None; row.len() - somes.len()];
             new_row.extend(somes);
             res.push(new_row);
         }
@@ -267,15 +276,15 @@ impl Field {
 
 #[cfg(test)]
 mod test {
-    use std::io::stderr;
-    use std::io::Write;
     use super::Field;
     use color::Color;
+    use direction::Direction::*;
     use position::Position;
     use poyo::Poyo;
     use poyopoyo::PoyoPoyo;
-    use direction::Direction::*;
     use size::Size;
+    use std::io::stderr;
+    use std::io::Write;
 
     #[test]
     fn test_field_current_poyo_reflects_poyos() {
@@ -344,26 +353,33 @@ mod test {
     #[test]
     fn test_current_cannot_move_left_when_already_filled() {
         let mut field = Field::default();
-        let pp = PoyoPoyo::new(Poyo::new(Position::new(0, 0), Color::Red),
-                               Poyo::new(Position::new(0, 1), Color::Red));
+        let pp = PoyoPoyo::new(
+            Poyo::new(Position::new(0, 0), Color::Red),
+            Poyo::new(Position::new(0, 1), Color::Red),
+        );
         field.set_current(pp);
-        let pp = PoyoPoyo::new(Poyo::new(Position::new(1, 0), Color::Red),
-                               Poyo::new(Position::new(2, 0), Color::Red));
+        let pp = PoyoPoyo::new(
+            Poyo::new(Position::new(1, 0), Color::Red),
+            Poyo::new(Position::new(2, 0), Color::Red),
+        );
         field.set_current(pp);
         assert_eq!(field.current_can_move(&Left), false);
     }
 
     #[test]
     fn test_transpose() {
-        let temp: Vec<Vec<(i32, i32)>> = vec![vec![(0, 0), (1, 0), (2, 0)],
-                                              vec![(0, 1), (1, 1), (2, 1)],
-                                              vec![(0, 2), (1, 2), (2, 2)]];
-        let poyos: Vec<Vec<Option<Poyo>>> = temp.iter()
+        let temp: Vec<Vec<(i32, i32)>> = vec![
+            vec![(0, 0), (1, 0), (2, 0)],
+            vec![(0, 1), (1, 1), (2, 1)],
+            vec![(0, 2), (1, 2), (2, 2)],
+        ];
+        let poyos: Vec<Vec<Option<Poyo>>> = temp
+            .iter()
             .map(|row| {
-                     row.iter()
-                         .map(|&(x, y)| Some(Poyo::new(Position::new(x, y), Color::Red)))
-                         .collect()
-                 })
+                row.iter()
+                    .map(|&(x, y)| Some(Poyo::new(Position::new(x, y), Color::Red)))
+                    .collect()
+            })
             .collect();
         let size = Size::new(3, 3);
         let mut field = Field {
@@ -382,25 +398,28 @@ mod test {
             }
             actual.push(nrow);
         }
-        let expected: Vec<Vec<(i32, i32)>> = vec![vec![(0, 0), (0, 1), (0, 2)],
-                                                  vec![(1, 0), (1, 1), (1, 2)],
-                                                  vec![(2, 0), (2, 1), (2, 2)]];
+        let expected: Vec<Vec<(i32, i32)>> = vec![
+            vec![(0, 0), (0, 1), (0, 2)],
+            vec![(1, 0), (1, 1), (1, 2)],
+            vec![(2, 0), (2, 1), (2, 2)],
+        ];
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_rightalign() {
-        let temp: Vec<Vec<Option<(i32, i32)>>> = vec![vec![Some((0, 0)), None, None],
-                                                      vec![Some((0, 1)), None, Some((2, 1))],
-                                                      vec![None, Some((1, 2)), None]];
-        let poyos: Vec<Vec<Option<Poyo>>> = temp.iter()
+        let temp: Vec<Vec<Option<(i32, i32)>>> = vec![
+            vec![Some((0, 0)), None, None],
+            vec![Some((0, 1)), None, Some((2, 1))],
+            vec![None, Some((1, 2)), None],
+        ];
+        let poyos: Vec<Vec<Option<Poyo>>> = temp
+            .iter()
             .map(|row| {
-                     row.iter()
-                         .map(|pos| {
-                                  pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red))
-                              })
-                         .collect()
-                 })
+                row.iter()
+                    .map(|pos| pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red)))
+                    .collect()
+            })
             .collect();
         let size = Size::new(3, 3);
         let mut field = Field {
@@ -409,35 +428,36 @@ mod test {
             ..Default::default()
         };
         field.right_align();
-        let expected: Vec<Vec<Option<(i32, i32)>>> = vec![vec![None, None, Some((0, 0))],
-                                                          vec![None, Some((0, 1)), Some((2, 1))],
-                                                          vec![None, None, Some((1, 2))]];
+        let expected: Vec<Vec<Option<(i32, i32)>>> = vec![
+            vec![None, None, Some((0, 0))],
+            vec![None, Some((0, 1)), Some((2, 1))],
+            vec![None, None, Some((1, 2))],
+        ];
         let expected: Vec<Vec<Option<Poyo>>> = expected
             .iter()
             .map(|row| {
-                     row.iter()
-                         .map(|pos| {
-                                  pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red))
-                              })
-                         .collect()
-                 })
+                row.iter()
+                    .map(|pos| pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red)))
+                    .collect()
+            })
             .collect();
         assert_eq!(field.poyos, expected);
     }
 
     #[test]
     fn test_fall_poyos() {
-        let temp: Vec<Vec<Option<(i32, i32)>>> = vec![vec![Some((0, 0)), None, None],
-                                                      vec![Some((0, 1)), None, Some((2, 1))],
-                                                      vec![None, Some((1, 2)), None]];
-        let poyos: Vec<Vec<Option<Poyo>>> = temp.iter()
+        let temp: Vec<Vec<Option<(i32, i32)>>> = vec![
+            vec![Some((0, 0)), None, None],
+            vec![Some((0, 1)), None, Some((2, 1))],
+            vec![None, Some((1, 2)), None],
+        ];
+        let poyos: Vec<Vec<Option<Poyo>>> = temp
+            .iter()
             .map(|row| {
-                     row.iter()
-                         .map(|pos| {
-                                  pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red))
-                              })
-                         .collect()
-                 })
+                row.iter()
+                    .map(|pos| pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red)))
+                    .collect()
+            })
             .collect();
         let size = Size::new(3, 3);
         let mut field = Field {
@@ -446,32 +466,32 @@ mod test {
             ..Default::default()
         };
         field.fall_poyos();
-        let expected: Vec<Vec<Option<(i32, i32)>>> =
-            vec![vec![None, None, None],
-                 vec![Some((0, 1)), None, None],
-                 vec![Some((0, 2)), Some((1, 2)), Some((2, 2))]];
+        let expected: Vec<Vec<Option<(i32, i32)>>> = vec![
+            vec![None, None, None],
+            vec![Some((0, 1)), None, None],
+            vec![Some((0, 2)), Some((1, 2)), Some((2, 2))],
+        ];
         let expected: Vec<Vec<Option<Poyo>>> = expected
             .iter()
             .map(|row| {
-                     row.iter()
-                         .map(|pos| {
-                                  pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red))
-                              })
-                         .collect()
-                 })
+                row.iter()
+                    .map(|pos| pos.map(|(x, y)| Poyo::new(Position::new(x, y), Color::Red)))
+                    .collect()
+            })
             .collect();
         assert_eq!(field.poyos, expected);
     }
 
     #[test]
     fn test_reset_position() {
-        let temp = vec![vec![(8,8),(8,9),(9,9)];3];
-        let poyos: Vec<Vec<Option<Poyo>>> = temp.iter()
+        let temp = vec![vec![(8, 8), (8, 9), (9, 9)]; 3];
+        let poyos: Vec<Vec<Option<Poyo>>> = temp
+            .iter()
             .map(|row| {
-                     row.iter()
-                         .map(|pos| Some(Poyo::new(Position::new(pos.0, pos.1), Color::Red)))
-                         .collect()
-                 })
+                row.iter()
+                    .map(|pos| Some(Poyo::new(Position::new(pos.0, pos.1), Color::Red)))
+                    .collect()
+            })
             .collect();
         let size = Size::new(3, 3);
         let mut field = Field {

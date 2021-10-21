@@ -1,7 +1,7 @@
 use std::default::Default;
 use std::fmt;
 
-#[derive(Debug,Copy,Clone,PartialEq,Eq,Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Position {
     pub x: i32,
     pub y: i32,

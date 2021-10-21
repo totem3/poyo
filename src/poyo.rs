@@ -1,11 +1,11 @@
-use std::collections::HashSet;
 use color::Color;
-use position::Position;
 use direction::Direction;
 use direction::Direction::*;
 use field::Field;
+use position::Position;
+use std::collections::HashSet;
 
-#[derive(Debug,Copy,Clone,PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Poyo {
     position: Position,
     color: Color,
@@ -58,10 +58,11 @@ impl Poyo {
         self._count_same_color(field, HashSet::new())
     }
 
-    fn _count_same_color(&self,
-                         field: &Field,
-                         counted: HashSet<Position>)
-                         -> (usize, HashSet<Position>) {
+    fn _count_same_color(
+        &self,
+        field: &Field,
+        counted: HashSet<Position>,
+    ) -> (usize, HashSet<Position>) {
         let mut counted = counted.clone();
         counted.insert(self.position);
         let mut count = 1;

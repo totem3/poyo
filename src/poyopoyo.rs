@@ -1,13 +1,13 @@
-use std::cmp::{min, max};
+use std::cmp::{max, min};
 use std::default::Default;
 
-use poyo::Poyo;
+use color::Color;
 use direction::Direction;
 use direction::Direction::*;
 use position::Position;
-use color::Color;
+use poyo::Poyo;
 
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PoyoPoyo(pub Poyo, pub Poyo);
 
 impl PoyoPoyo {
@@ -16,8 +16,10 @@ impl PoyoPoyo {
     }
 
     pub fn rand() -> Self {
-        PoyoPoyo(Poyo::new(Position::new(1, 0), Color::rand()),
-                 Poyo::new(Position::new(1, 1), Color::rand()))
+        PoyoPoyo(
+            Poyo::new(Position::new(1, 0), Color::rand()),
+            Poyo::new(Position::new(1, 1), Color::rand()),
+        )
     }
 
     pub fn x(&self) -> (i32, i32) {
@@ -80,18 +82,20 @@ impl PoyoPoyo {
 
 impl Default for PoyoPoyo {
     fn default() -> Self {
-        PoyoPoyo(Poyo::new(Position::new(1, 0), Color::Red),
-                 Poyo::new(Position::new(1, 1), Color::Red))
+        PoyoPoyo(
+            Poyo::new(Position::new(1, 0), Color::Red),
+            Poyo::new(Position::new(1, 1), Color::Red),
+        )
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::PoyoPoyo;
-    use poyo::Poyo;
+    use color::Color;
     use direction::Direction::*;
     use position::Position;
-    use color::Color;
+    use poyo::Poyo;
 
     #[test]
     fn test_poyopoyo_can_move() {
